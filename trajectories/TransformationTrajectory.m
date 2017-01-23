@@ -81,6 +81,10 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             position_trajectory = PositionTrajectory(obj.positions, obj.times);
         end
         
+        function orientation_trajectory = getOrientationTrajectory(obj)
+            orientation_trajectory = OrientationTrajectory(obj.orientations, obj.times);
+        end
+        
         % Composes this trajectory with another
         function transformed_trajectory = compose(obj, trajectory_other)
             % Combined vector form

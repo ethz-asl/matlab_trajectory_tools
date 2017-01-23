@@ -3,7 +3,10 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
     %   Detailed explanation goes here
     
     properties
-        data
+        % Raw Data
+        orientations
+        times
+        % Properties
         length
     end
     
@@ -11,11 +14,36 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = OrientationTrajectory(data)
-            obj.data = data;
-            obj.length = size(data.Time, 1);
+        function obj = OrientationTrajectory(orientations, times)
+            obj.setData(orientations, times)
         end
         
+        % Sets the data
+        function setData(obj, orientations, times)
+            % Checks
+            assert(size(orientations,1) == size(times,1), 'Must be the same number of orientations as times.');
+            % Storing the raw data
+            obj.orientations = orientations;
+            obj.times = times;
+            % Properties
+            obj.length = size(times, 1);
+        end
+        
+        % Returns an indexed orientation quaternion
+        function q = getOrientationQuaternion(obj, index)
+            q = OrientationQuaternion(obj.orientations(index, :));
+        end
+        
+        % Returns the trajectory with inverted rotation matrices
+        function inverse_trajectory = inverse(obj)
+            inverse_trajectory = OrientationTrajectory(k_quat_inv(obj.orientations), obj.times);
+        end
+        
+        % Compose this trajectory with another
+        function transformed_trajectory = compose(obj, trajectory_other)
+            q = k_quat_mult(obj.orientations, trajectory_other.orientations());
+            transformed_trajectory = OrientationTrajectory(q, obj.times);
+        end
         
         % Transforms a trajectory of vectors
         function rotateTrajectory(obj, trajectory)
@@ -27,18 +55,16 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
             % TODO(alexmillane): Make this matrix based for speed.
             v_rotated = zeros(trajectory.length(), 3);
             for i = 1:obj.length
-                v_rotated(i,:) = squeeze(R(i,:,:)) * trajectory.data().Data(i,:)';
+                v_rotated(i,:) = squeeze(R(i,:,:)) * trajectory.positions(i,:)';
             end
-            % Making a timeseries
-            v_rotated_timeseries = timeseries(v_rotated, trajectory.data().Time());
             % Writing the data
-            trajectory.setData(v_rotated_timeseries);
+            trajectory.setData(v_rotated, trajectory.times());
         end
         
         % Gets a trajectory of rotation matrices
         function R = getRotationMatrixTrajectory(obj)
             % Sending the trajectory data to the generic function
-            R = obj.quat2rot(obj.data.Data);
+            R = obj.quat2rot(obj.orientations);
         end
         
     end
@@ -46,6 +72,7 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
     methods(Static)
         
         % Converts an array of quaternions to an array of rotation matrices
+        % TAKE THIS OUT AND USE MIKE BOSSE BACKEND
         function R = quat2rot(Q)
             % Credits to: Mike Bosse
             Q = permute(Q, [2 3 1]);

@@ -1,4 +1,4 @@
-classdef RotationQuaternion < handle & matlab.mixin.Copyable
+classdef OrientationQuaternion < handle & matlab.mixin.Copyable
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
@@ -10,7 +10,7 @@ classdef RotationQuaternion < handle & matlab.mixin.Copyable
     methods
         
         % Constructor
-        function obj = RotationQuaternion(quat)
+        function obj = OrientationQuaternion(quat)
             % If no arguments initialize identity transform
             if nargin == 0
                 quat = [1 0 0 0];
