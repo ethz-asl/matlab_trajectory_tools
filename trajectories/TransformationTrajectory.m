@@ -3,7 +3,8 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
     %   Detailed explanation goes here
     
     properties
-        % Raw timeseries data
+        % Raw data
+        times
         positions
         orientations
         % Properites
@@ -14,80 +15,83 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = TransformationTrajectory(orientations, positions)
+        function obj = TransformationTrajectory(orientations, positions, times)
             % Setting the data
-            obj.setData(orientations, positions);
+            obj.setData(orientations, positions, times);
         end
         
-        % Sets the data from two timeseries
-        function setData(obj, orientations, positions)
+        % Sets the data
+        function setData(obj, orientations, positions, times)
             % Checks
-            assert( size(positions.Time, 1) == size(orientations.Time, 1))
+            assert( size(times, 1) == size(orientations, 1), 'Number of orientations must be the same as the number of times')
+            assert( size(times, 1) == size(positions, 1), 'Number of positions must be the same as the number of times')
             % Saving the data
+            obj.times = times;
             obj.positions = positions;
             obj.orientations = orientations;
-            obj.length = size(positions.Time, 1);
+            % Properties
+            obj.length = size(times, 1);
         end
         
         % Returns a transformation by index
         function T = getTransformation(obj, index)
-            T = Transformation(obj.orientations.Data(index,:), obj.positions.Data(index,:));
+            T = Transformation(obj.orientations(index,:), obj.positions(index,:));
         end
         
         % Returns a trajectory which is the inverse of the 
         function trajectory_inverse = inverse(obj)
             % Combined vector form
-            trajectory_vec = [obj.positions.Data obj.orientations.Data];
+            trajectory_vec = [obj.positions obj.orientations];
             % Getting inverse
             trajectory_inverse_vec = k_tf_inv(trajectory_vec);
             % Converting to object
-            q = timeseries(trajectory_inverse_vec(:,4:7), obj.positions.Time);
-            t = timeseries(trajectory_inverse_vec(:,1:3), obj.positions.Time);
-            trajectory_inverse = TransformationTrajectory(q, t);
+            q = trajectory_inverse_vec(:,4:7);
+            t = trajectory_inverse_vec(:,1:3);
+            trajectory_inverse = TransformationTrajectory(q, t, obj.times);
         end
         
         % Applies a transformation to the trajectory
         function transformed_trajectory = applyStaticTransformLHS(obj, T_static)
             % Combined vector form
-            T_vec_obj = [obj.positions.Data obj.orientations.Data];
+            T_vec_obj = [obj.positions obj.orientations];
             T_vec_static = [T_static.position T_static.orientation_quat];
             %   Doing composition
             T_vec_transformed = k_tf_mult(T_vec_static, T_vec_obj);
             % Converting to object
-            q = timeseries(T_vec_transformed(:,4:7), obj.positions.Time);
-            t = timeseries(T_vec_transformed(:,1:3), obj.positions.Time);
-            transformed_trajectory = TransformationTrajectory(q, t);
+            q = T_vec_transformed(:,4:7);
+            t = T_vec_transformed(:,1:3);
+            transformed_trajectory = TransformationTrajectory(q, t, obj.times);
         end
         
         % Applies a transformation to the trajectory
         function transformed_trajectory = applyStaticTransformRHS(obj, T_static)
             % Combined vector form
-            T_vec_obj = [obj.positions.Data obj.orientations.Data];
+            T_vec_obj = [obj.positions obj.orientations];
             T_vec_static = [T_static.position T_static.orientation_quat];
             %   Doing composition
             T_vec_transformed = k_tf_mult(T_vec_obj, T_vec_static);
             % Converting to object
-            q = timeseries(T_vec_transformed(:,4:7), obj.positions.Time);
-            t = timeseries(T_vec_transformed(:,1:3), obj.positions.Time);
-            transformed_trajectory = TransformationTrajectory(q, t);
+            q = T_vec_transformed(:,4:7);
+            t = T_vec_transformed(:,1:3);
+            transformed_trajectory = TransformationTrajectory(q, t, obj.times);
         end
               
         % Returns the position trajectory
         function position_trajectory = getPositionTrajectory(obj)
-            position_trajectory = PositionTrajectory3D(obj.positions);
+            position_trajectory = PositionTrajectory(obj.positions, obj.times);
         end
         
         % Composes this trajectory with another
         function transformed_trajectory = compose(obj, trajectory_other)
             % Combined vector form
-            T_vec_obj = [obj.positions.Data obj.orientations.Data];
-            T_vec_other = [trajectory_other.positions.Data trajectory_other.orientations.Data];
+            T_vec_obj = [obj.positions obj.orientations];
+            T_vec_other = [trajectory_other.positions trajectory_other.orientations];
             %   Doing composition
             T_vec_transformed = k_tf_mult(T_vec_obj, T_vec_other);
             % Converting to object
-            q = timeseries(T_vec_transformed(:,4:7), obj.positions.Time);
-            t = timeseries(T_vec_transformed(:,1:3), obj.positions.Time);
-            transformed_trajectory = TransformationTrajectory(q, t);
+            q = T_vec_transformed(:,4:7);
+            t = T_vec_transformed(:,1:3);
+            transformed_trajectory = TransformationTrajectory(q, t, obj.times);
         end
         
         % Gets a windowed portion of this trajectory
@@ -96,11 +100,11 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             assert(start_index >= 1, 'Start index should be greater than 1.');
             assert(end_index <= obj.length, 'End index should be less than length.');
             % Creating the timeseries
-            windowed_times = obj.positions.Time(start_index:end_index);
-            windowed_positions = timeseries(obj.positions.Data(start_index:end_index,:), windowed_times);
-            windowed_orientations = timeseries(obj.orientations.Data(start_index:end_index,:), windowed_times);
+            windowed_times = obj.times(start_index:end_index);
+            windowed_positions = obj.positions(start_index:end_index,:);
+            windowed_orientations = obj.orientations(start_index:end_index,:);
             % Creating the trajectory object
-            windowed_trajectory = TransformationTrajectory(windowed_orientations, windowed_positions);
+            windowed_trajectory = TransformationTrajectory(windowed_orientations, windowed_positions, windowed_times);
         end
                 
         % Plots the trajectory

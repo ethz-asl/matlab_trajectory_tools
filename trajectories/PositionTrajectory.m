@@ -1,9 +1,12 @@
-classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
+classdef PositionTrajectory < handle & matlab.mixin.Copyable
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
     properties
-        data
+        % Raw Data
+        positions
+        times
+        % Properties
         length
     end
     
@@ -11,27 +14,32 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = PositionTrajectory3D(data)
-            obj.data = data;
-            obj.length = size(data.Time, 1);
+        function obj = PositionTrajectory(positions, times)
+            % Setting data
+            obj.setData(positions, times)
         end
         
         % Sets the data
-        function setData(obj, data)
-            obj.data = data;
-            obj.length = size(data.Time, 1);
+        function setData(obj, positions, times)
+            % Checks
+            assert(size(positions,1) == size(times,1), 'Times and positions must have the same length');
+            % Storing the data
+            obj.positions = positions;
+            obj.times = times;
+            % Properties
+            obj.length = size(times, 1);
         end
         
         % Gets the position at a time index
         function position = getPositionAtIndex(obj, index)
-            position = obj.data.Data(index,:);
+            position = obj.positions(index,:);
         end
         
         % Truncates the trajectory based on passed times
-        function truncate(obj, start_time, end_time)
+        function truncateToTimes(obj, start_time, end_time)
             % Finding the index bounds for truncation
-            start_index = find(obj.data.Time >= start_time, 1, 'first');
-            end_index = find(obj.data.Time <= end_time, 1, 'last');
+            start_index = find(obj.times >= start_time, 1, 'first');
+            end_index = find(obj.times <= end_time, 1, 'last');
             % Rewriting the data
             obj.truncateToIndicies(start_index, end_index);
         end
@@ -39,12 +47,15 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
         % Truncates the trajectory to indicies
         function truncateToIndicies(obj, start_index, end_index)
             % Rewriting the data
-            obj.setData(timeseries(obj.data.Data(start_index:end_index, :),...
-                                   obj.data.Time(start_index:end_index)));
+            obj.setData(obj.positions(start_index:end_index, :),...
+                        obj.times(start_index:end_index));
         end
         
         % Resamples the trajectory at the passed times
         function resample(obj, times)
+            
+            % THIS NEEDS SOME WORK
+            
             obj.setData(obj.data.resample(times));
         end
         
@@ -53,7 +64,7 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             % Checks
             assert(obj.length() == truth.length(), 'Trajectories different lengths. Consider using rmsErrorToWithResampling');
             % Calculating the rms
-            error = rms(obj.data().Data() - truth.data().Data());
+            error = rms(obj.positions - truth.positions());
         end
         
         % Gives the RMS error between this and a given trajectory
@@ -65,10 +76,10 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             % Resampling this trajectory
             truth_copy = truth.copy();
             obj_copy = obj.copy();
-            obj_copy.truncate(truth_copy.data().Time(1), truth_copy.data().Time(end))
-            truth_copy.resample(obj_copy.data().Time());
+            obj_copy.truncateToTimes(truth_copy.times(1), truth_copy.times(end))
+            truth_copy.resample(obj_copy.times());
             % Calculating the rms
-            error = rms(obj_copy.data().Data() - truth_copy.data().Data());
+            error = rms(obj_copy.positions() - truth_copy.positions());
         end
         
         % Returns the error trajectory between this and a give trajectory
@@ -76,14 +87,14 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             % Checks
             assert(obj.length() == truth.length(), 'Trajectories different lengths. CONSIDER WRITING FUNCTION WITH RESAMPLING');
             % Calculating the error trajectory
-            error_trajectory = sqrt(sum((obj.data().Data() - truth.data().Data()).^2, 2));
+            error_trajectory = sqrt(sum((obj.positions() - truth.positions()).^2, 2));
         end
         
         % Returns an array of the norms of the trajectory vectors
         function norms = getNorms(obj)
-            norms = zeros(obj.length, 1);
+            norms = zeros(obj.length(), 1);
             for i = 1:obj.length
-                norms(i) = norm(obj.data.Data(i,:));
+                norms(i) = norm(obj.positions(i,:));
             end
         end
         
@@ -94,16 +105,16 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             end
             holdstate = ishold;
             hold on
-            h_temp = plot3( obj.data.Data(:,1),...
-                            obj.data.Data(:,2),...
-                            obj.data.Data(:,3),...
+            h_temp = plot3( obj.positions(:,1),...
+                            obj.positions(:,2),...
+                            obj.positions(:,3),...
                             symbol);
-            plot3( obj.data.Data(1,1),...
-                   obj.data.Data(1,2),...
-                   obj.data.Data(1,3), 'go');
-            plot3( obj.data.Data(end,1),...
-                   obj.data.Data(end,2),...
-                   obj.data.Data(end,3), 'ro');
+            plot3( obj.positions(1,1),...
+                   obj.positions(1,2),...
+                   obj.positions(1,3), 'go');
+            plot3( obj.positions(end,1),...
+                   obj.positions(end,2),...
+                   obj.positions(end,3), 'ro');
             if nargout > 0 
                 h = h_temp;
             end
@@ -119,7 +130,7 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             end
             holdstate = ishold;
             hold on
-            h_temp = plot([  obj.data.Time           obj.data.Time]',...
+            h_temp = plot([  obj.times               obj.times]',...
                           [  zeros(obj.length(),1)   ones(obj.length(),1)]',...
                              color);
             h_temp = h_temp(1);
@@ -139,15 +150,15 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             holdstate = ishold;
             hold on
             subplot(3,1,1)
-            plot(obj.data.Time, obj.data.Data(:,1), symbol)
+            plot(obj.times, obj.positions(:,1), symbol)
             xlabel('Time (s)'); ylabel('X (m)');
             hold on
             subplot(3,1,2)
-            plot(obj.data.Time, obj.data.Data(:,2), symbol)
+            plot(obj.times, obj.positions(:,2), symbol)
             xlabel('Time (s)'); ylabel('Y (m)');
             hold on
             subplot(3,1,3)
-            plot(obj.data.Time, obj.data.Data(:,3), symbol)
+            plot(obj.times, obj.positions(:,3), symbol)
             xlabel('Time (s)'); ylabel('Z (m)');
             
             if nargout > 0 
@@ -165,13 +176,13 @@ classdef PositionTrajectory3D < handle & matlab.mixin.Copyable
             end
             holdstate = ishold;
             hold on
-            h_temp = plot( obj.data.Data(:,1),...
-                           obj.data.Data(:,2),...
+            h_temp = plot( obj.positions(:,1),...
+                           obj.positions(:,2),...
                            symbol);
-            plot( obj.data.Data(1,1),...
-                  obj.data.Data(1,2), 'go');
-            plot( obj.data.Data(end,1),...
-                  obj.data.Data(end,2), 'ro');
+            plot( obj.positions(1,1),...
+                  obj.positions(1,2), 'go');
+            plot( obj.positions(end,1),...
+                  obj.positions(end,2), 'ro');
             if nargout > 0 
                 h = h_temp;
             end

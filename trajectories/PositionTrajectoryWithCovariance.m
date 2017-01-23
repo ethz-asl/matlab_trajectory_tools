@@ -1,4 +1,4 @@
-classdef PositionTrajectory3DWithCovariance < PositionTrajectory3D
+classdef PositionTrajectoryWithCovariance < PositionTrajectory3D
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
@@ -10,7 +10,7 @@ classdef PositionTrajectory3DWithCovariance < PositionTrajectory3D
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = PositionTrajectory3DWithCovariance(data, covariance)
+        function obj = PositionTrajectoryWithCovariance(data, covariance)
             % Calling the superclass constructor
             obj = obj@PositionTrajectory3D(data);
             % Saving the data

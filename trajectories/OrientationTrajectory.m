@@ -1,4 +1,4 @@
-classdef OrientationTrajectory3D < handle & matlab.mixin.Copyable
+classdef OrientationTrajectory < handle & matlab.mixin.Copyable
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
@@ -11,7 +11,7 @@ classdef OrientationTrajectory3D < handle & matlab.mixin.Copyable
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = OrientationTrajectory3D(data)
+        function obj = OrientationTrajectory(data)
             obj.data = data;
             obj.length = size(data.Time, 1);
         end
