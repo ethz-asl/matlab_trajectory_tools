@@ -2,11 +2,12 @@ function rv = k_quat_rotate(q,v)
 %QUAT_ROTATE rotates a vector by a quaternion
 % Quaternions are w x y z, active.
 
+% Normal -. Mbosse
 q = q';
 v = v';
 
-if size(q,2) == 1
-  rv = quat2rot(q) * v;
+if size(q,1) == 1
+  rv = squeeze(quat2rot(q)) * v;
 else
 
   rv = zeros(3,size(q,2));

@@ -64,25 +64,9 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
         % Gets a trajectory of rotation matrices
         function R = getRotationMatrixTrajectory(obj)
             % Sending the trajectory data to the generic function
-            R = obj.quat2rot(obj.orientations);
+            R = quat2rot(obj.orientations);
         end
         
-    end
-    
-    methods(Static)
-        
-        % Converts an array of quaternions to an array of rotation matrices
-        % TAKE THIS OUT AND USE MIKE BOSSE BACKEND
-        function R = quat2rot(Q)
-            % Credits to: Mike Bosse
-            Q = permute(Q, [2 3 1]);
-            R = [
-               Q(1,1,:).^2+Q(2,1,:).^2-Q(3,1,:).^2-Q(4,1,:).^2 2.0.*(Q(2,1,:).*Q(3,1,:)-Q(1,1,:).*Q(4,1,:))   2.0.*(Q(2,1,:).*Q(4,1,:)+Q(1,1,:).*Q(3,1,:))
-               2.0.*(Q(2,1,:).*Q(3,1,:)+Q(1,1,:).*Q(4,1,:))   Q(1,1,:).^2-Q(2,1,:).^2+Q(3,1,:).^2-Q(4,1,:).^2 2.0.*(Q(3,1,:).*Q(4,1,:)-Q(1,1,:).*Q(2,1,:))
-               2.0.*(Q(2,1,:).*Q(4,1,:)-Q(1,1,:).*Q(3,1,:))   2.0.*(Q(3,1,:).*Q(4,1,:)+Q(1,1,:).*Q(2,1,:))   Q(1,1,:).^2-Q(2,1,:).^2-Q(3,1,:).^2+Q(4,1,:).^2];
-           R = permute(R, [3,1,2]);
-        end
-                        
     end
     
 end

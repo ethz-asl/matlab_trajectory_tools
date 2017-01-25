@@ -134,38 +134,5 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
         
     end
     
-    methods(Static)
-       
-        % Converts a vector of rotation matrices to a vector of quaternions
-        function q = rot2quat(R)
-            % Credits MBosse
-            % Alex -> Mbosse
-            Rb = permute(R, [2,3,1]);
-            % Reshaping from 3x3xn to 9xn
-            Rv = reshape(Rb,9,[]);
-            % the cubed root determinate of R is the scaling factor
-            detR = sum(Rv([1 4 7],:).*Rv([5 8 2],:).*Rv([9 3 6],:))- ...
-                   sum(Rv([7 1 4],:).*Rv([5 8 2],:).*Rv([3 6 9],:));
-            Q2 = detR.^(1/3);
-            % Forming the quaternions
-            qb = sqrt(max(0,[(Q2+Rv(1,:)+Rv(5,:)+Rv(9,:))
-                            (Q2+Rv(1,:)-Rv(5,:)-Rv(9,:))
-                            (Q2-Rv(1,:)+Rv(5,:)-Rv(9,:))
-                            (Q2-Rv(1,:)-Rv(5,:)+Rv(9,:))]))/2;
-            % now copy signs
-            g = find(Rv(6,:)<Rv(8,:)); qb(2,g) = -qb(2,g);
-            g = find(Rv(7,:)<Rv(3,:)); qb(3,g) = -qb(3,g);
-            g = find(Rv(2,:)<Rv(4,:)); qb(4,g) = -qb(4,g);
-
-            Q2 = sum(qb.^2);
-            % normalize
-            D = 0.5*(1-Q2);
-            qb = qb + qb.*D([1 1 1 1],:);
-            % Mbosse -> Alex
-            q = permute(qb,[2,1]);
-        end
-        
-    end
-    
 end
 

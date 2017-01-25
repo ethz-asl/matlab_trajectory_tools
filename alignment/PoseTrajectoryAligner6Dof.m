@@ -57,7 +57,7 @@ classdef PoseTrajectoryAligner6Dof < PoseTrajectoryAlignerBase
             t_y = sigma_star(5);
             t_z = sigma_star(6);
             % The transform encoded by the optimization variables
-            q = rpy2quat(w_r, w_p, w_y)';
+            q = ypr2quat(w_y, w_p, w_r)';
             t = [t_x, t_y, t_z];
             T_alignment = Transformation(q, t);
         end
@@ -80,7 +80,7 @@ classdef PoseTrajectoryAligner6Dof < PoseTrajectoryAlignerBase
             t_y = sigma(5);
             t_z = sigma(6);
             % The transform encoded by the optimization variables
-            q = rpy2quat(w_r, w_p, w_y)';
+            q = ypr2quat(w_y, w_p, w_r)';
             t = [t_x, t_y, t_z];
             T_sigma = Transformation(q, t);
             % Constructing transform trajectories trajectory
