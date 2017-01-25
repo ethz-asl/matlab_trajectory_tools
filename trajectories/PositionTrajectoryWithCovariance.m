@@ -1,4 +1,4 @@
-classdef PositionTrajectoryWithCovariance < PositionTrajectory3D
+classdef PositionTrajectoryWithCovariance < PositionTrajectory
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
@@ -10,9 +10,9 @@ classdef PositionTrajectoryWithCovariance < PositionTrajectory3D
         
         % Constructor
         % Initializes the trajectory from a timeseries 
-        function obj = PositionTrajectoryWithCovariance(data, covariance)
+        function obj = PositionTrajectoryWithCovariance(positions, times, covariance)
             % Calling the superclass constructor
-            obj = obj@PositionTrajectory3D(data);
+            obj = obj@PositionTrajectory(positions, times);
             % Saving the data
             obj.covariance = covariance;
         end
@@ -36,21 +36,21 @@ classdef PositionTrajectoryWithCovariance < PositionTrajectory3D
             obj.plot3Axis(symbol);
             % Constructing the std lines
             std_trajectory = obj.getStdTrajectory();
-            plus_std = obj.data.Data + num_std * std_trajectory;
-            minus_std = obj.data.Data - num_std * std_trajectory;
+            plus_std = obj.positions + num_std * std_trajectory;
+            minus_std = obj.positions - num_std * std_trajectory;
             % Potting the std lines
             hold on
             subplot(3,1,1)
-            plot(obj.data.Time, plus_std(:,1), '--')
-            plot(obj.data.Time, minus_std(:,1), '--')
+            plot(obj.times, plus_std(:,1), '--')
+            plot(obj.times, minus_std(:,1), '--')
             hold on
             subplot(3,1,2)
-            plot(obj.data.Time, plus_std(:,2), '--')
-            plot(obj.data.Time, minus_std(:,2), '--')
+            plot(obj.times, plus_std(:,2), '--')
+            plot(obj.times, minus_std(:,2), '--')
             hold on
             subplot(3,1,3)
-            plot(obj.data.Time, plus_std(:,3), '--')
-            plot(obj.data.Time, minus_std(:,3), '--')
+            plot(obj.times, plus_std(:,3), '--')
+            plot(obj.times, minus_std(:,3), '--')
             
             if nargout > 0 
                 h = h_temp;

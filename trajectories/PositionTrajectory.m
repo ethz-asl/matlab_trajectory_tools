@@ -51,11 +51,15 @@ classdef PositionTrajectory < handle & matlab.mixin.Copyable
                         obj.times(start_index:end_index));
         end
         
-%         % TODO(alexmillane): FINISH THIS AT A LATER DATE
-%         % Resamples the trajectory at the passed times
-%         function resample(obj, times)
-%             obj.setData(obj.data.resample(times));
-%         end
+        % Resamples the trajectory at the passed times
+        function resample(obj, times)
+            % Creating time series
+            data_timeseries = timeseries(obj.positions, obj.times);
+            % Resampling
+            data_timeseries_resampled = data_timeseries.resample(times);
+            % Updating the object
+            obj.setData(data_timeseries_resampled.Data(), data_timeseries_resampled.Time());
+        end
         
         % Gives the RMS error between this and a given trajectory
         function error = rmsErrorTo(obj, truth)
