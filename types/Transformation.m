@@ -28,7 +28,7 @@ classdef Transformation < handle & matlab.mixin.Copyable
             % Checks
             assert(length(orientation_quat) == 4, 'Quaternion incorrectly sized');
             assert(length(position) == 3, 'Position incorrectly sized');
-            eps = 1e-10;
+            eps = 1e-8;
             assert(norm(orientation_quat)-1 < eps, 'Quaternion does not have unit norm');
             % Saving the data
             obj.orientation_quat = orientation_quat;

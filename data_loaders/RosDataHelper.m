@@ -118,6 +118,65 @@ classdef RosDataHelper < handle
             transforms.orientations = orientations;
         end
         
+        function pose_arrays = convertPoseArrayMessages(pose_array_messages)
+            % Looping over the messages and converting
+            message_num = size(pose_array_messages,1);
+            pose_arrays = cell(message_num,1);
+            for message_index = 1:message_num
+                % Extracting this pose array
+                pose_array = pose_array_messages{message_index};
+                % Extracting the data in this pose array
+                pose_num = size(pose_array.Poses, 1);
+                positions = zeros(pose_num,3);
+                orientations = zeros(pose_num,4);
+                for pose_index = 1:pose_num
+                    pose = pose_array.Poses(pose_index);
+                    positions(pose_index,:) = [ pose.Position.X,...
+                                                pose.Position.Y,...
+                                                pose.Position.Z];
+                    orientations(pose_index,:) = [  pose.Orientation.W,...
+                                                    pose.Orientation.X,...
+                                                    pose.Orientation.Y,...
+                                                    pose.Orientation.Z];
+                end
+                % Output
+                pose_arrays{message_index}.positions = positions;
+                pose_arrays{message_index}.orientations = orientations;
+            end
+            
+        end
+        
+        function pose_arrays = convertTransformStampedArrayMessages(transform_stamped_array_messages)
+            % Looping over the messages and converting
+            message_num = size(transform_stamped_array_messages,1);
+            pose_arrays = cell(message_num,1);
+            for message_index = 1:message_num
+                % Extracting this pose array
+                transform_stamped_array = transform_stamped_array_messages{message_index};
+                % Extracting the data in this pose array
+                transform_num = size(transform_stamped_array.Transforms, 1);
+                times = zeros(transform_num,1);
+                translations = zeros(transform_num,3);
+                rotations = zeros(transform_num,4);
+                for transform_index = 1:transform_num
+                    times(transform_index) = seconds(transform_stamped_array.Transforms(transform_index).Header.Stamp);
+                    transform = transform_stamped_array.Transforms(transform_index).Transform;
+                    translations(transform_index,:) = [ transform.Translation.X,...
+                                                        transform.Translation.Y,...
+                                                        transform.Translation.Z];
+                    rotations(transform_index,:) = [  transform.Rotation.W,...
+                                                      transform.Rotation.X,...
+                                                      transform.Rotation.Y,...
+                                                      transform.Rotation.Z];
+                end
+                % Output
+                pose_arrays{message_index}.times = times;
+                pose_arrays{message_index}.translations = translations;
+                pose_arrays{message_index}.rotations = rotations;
+            end
+            
+        end
+        
         % Converts a range message stream to a timeseries
         % Converts a set of position stamped messages to arrays
         function ranges_stamped = convertRangeStampedMessages(range_messages)
