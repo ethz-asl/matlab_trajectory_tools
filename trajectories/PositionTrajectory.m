@@ -171,7 +171,7 @@ classdef PositionTrajectory < handle & matlab.mixin.Copyable
             end
         end
         
-        % Plots the trajectory in XY plan
+        % Plots the trajectory in XY plane
         function h = plotXY(obj, symbol)
             if nargin < 2
                 symbol = '';
