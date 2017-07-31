@@ -21,10 +21,6 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             end
             % Setting the data
             obj.setData(orientation_quat, position)
-            % Updating transformation matrix
-            % NOTE(alexmillane): This might slow things down if you make
-            % many transformation matrices
-            obj.updateTransformationMatrix();
         end
                 
         % Sets the data
@@ -37,6 +33,10 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             % Saving the data
             obj.orientation_quat = orientation_quat;
             obj.position = position;
+            % Updating transformation matrix
+            % NOTE(alexmillane): This might slow things down if you make
+            % many transformation matrices
+            obj.updateTransformationMatrix();
         end
 
         % Updates the transformation matrix member from the other members

@@ -75,6 +75,19 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             t = T_vec_transformed(:,1:3);
             transformed_trajectory = TransformationTrajectory(q, t, obj.times);
         end
+        
+        % Applies a Similarity transformation to the trajectory
+        function transformed_trajectory = applyStaticSimTransformLHS(obj, T_static)
+            % Combined vector form
+            T_vec_obj = [obj.positions obj.orientations];
+            T_vec_static = [T_static.position T_static.orientation_quat];
+            %   Doing composition (without scale)
+            T_vec_transformed = k_tf_mult(T_vec_static, T_vec_obj);
+            % Converting to object (and scaling)
+            q = T_vec_transformed(:,4:7);
+            t = T_vec_transformed(:,1:3) * T_static.scale;
+            transformed_trajectory = TransformationTrajectory(q, t, obj.times);
+        end
               
         % Returns the position trajectory
         function position_trajectory = getPositionTrajectory(obj)
