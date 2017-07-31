@@ -60,6 +60,21 @@ classdef PositionTrajectory < handle & matlab.mixin.Copyable
             % Updating the object
             obj.setData(data_timeseries_resampled.Data(), data_timeseries_resampled.Time());
         end
+              
+        % Applies a transformation to the trajectory
+        function transformed_trajectory = applyStaticTransformLHS(obj, T_static)
+            % Transform vector form
+            T_vec_static = [T_static.position T_static.orientation_quat];
+            %   Doing transformation
+            positions_transformed = k_tf_transform(T_vec_static, obj.positions);
+            % Converting to object
+            transformed_trajectory = PositionTrajectory(positions_transformed, obj.times);
+        end
+        
+%         % Applies a transformation to the trajectory
+%         % TODO
+%         function transformed_trajectory = applyStaticTransformRHS(obj, T_static)
+%         end
         
         % Gives the RMS error between this and a given trajectory
         function error = rmsErrorTo(obj, truth)

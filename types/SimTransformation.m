@@ -1,4 +1,4 @@
-classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationBase
+classdef Transformation < handle & matlab.mixin.Copyable
     %TRAJECTORY Encapsulates trajectory functionality
     %   Detailed explanation goes here
     
@@ -6,14 +6,14 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
         % Raw data
         orientation_quat
         position
+        % Dependant data
+        transformation_matrix
     end
     
     methods
         
         % Constructor
         function obj = Transformation(orientation_quat, position)
-            % Calling the superclass constructor
-            obj = obj@LinearTransformationBase();
             % If no arguments initialize identity transform
             if nargin == 0
                 orientation_quat = [1 0 0 0];
@@ -21,10 +21,6 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             end
             % Setting the data
             obj.setData(orientation_quat, position)
-            % Updating transformation matrix
-            % NOTE(alexmillane): This might slow things down if you make
-            % many transformation matrices
-            obj.updateTransformationMatrix();
         end
                 
         % Sets the data
@@ -37,13 +33,10 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             % Saving the data
             obj.orientation_quat = orientation_quat;
             obj.position = position;
-        end
-
-        % Updates the transformation matrix member from the other members
-        function updateTransformationMatrix(obj)
-            R = obj.quat2rot(obj.orientation_quat);
-            p = obj.position';
-            obj.transformation_matrix = [R p ; 0 0 0 1];
+            % Calculating transformation matrix
+            % NOTE(alexmillane): This might slow things down if you make
+            % many transformation matrices
+            obj.transformation_matrix = obj.calculateTransformationMatrix();
         end
         
         % Initialize from a transformation matrix
@@ -66,6 +59,18 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             % TODO(alexmillane): Probably quicker to operate with quaternions directly
             %                    as in minkindr.
 %             r_q = obj_1.quatmult(obj_1.orientation_quat(), obj_2.orientation_quat())
+        end
+        
+        % Returns the 4x4 transformation 
+        function T = getTransformationMatrix(obj)
+            T = obj.transformation_matrix;
+        end
+        
+        % Returns the 4x4 transformation 
+        function T = calculateTransformationMatrix(obj)
+            R = obj.quat2rot(obj.orientation_quat);
+            p = obj.position';
+            T = [R p ; 0 0 0 1];
         end
         
         % Transforms a set of vectors
@@ -129,6 +134,49 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
     end
     
     methods(Static)
+        
+        % Converts an array of quaternions to an array of rotation matrices
+        function R = quat2rot(q)
+            % Credits MBosse
+            R = [   q(1).^2+q(2).^2-q(3).^2-q(4).^2 2.0.*(q(2).*q(3)-q(1).*q(4))    2.0.*(q(2).*q(4)+q(1).*q(3))
+                    2.0.*(q(2).*q(3)+q(1).*q(4))    q(1).^2-q(2).^2+q(3).^2-q(4).^2 2.0.*(q(3).*q(4)-q(1).*q(2))
+                    2.0.*(q(2).*q(4)-q(1).*q(3))    2.0.*(q(3).*q(4)+q(1).*q(2))    q(1).^2-q(2).^2-q(3).^2+q(4).^2];
+        end
+        
+        % Multiplies two quaternions
+        function r = quatmult(p,q)
+            % Credits MBosse
+            r = [   p(1)*q(1) - sum(p(2:4).*q(2:4)), ...
+                    p([1 1 1]).*q(2:4) +     ...
+                    q([1 1 1]).*p(2:4) +     ...
+                    p([3 4 2]).*q([4 2 3]) - ...
+                    p([4 2 3]).*q([3 4 2])      ];
+        end
+        
+        % Quaternion to rotation matrix
+        function q = rot2quat(R)
+            % Credits MBosse
+            Rv = reshape(R,9,1);
+            % The cubed root determinate of R is the scaling factor
+            detR = sum(Rv([1 4 7]).*Rv([5 8 2]).*Rv([9 3 6]))- ...
+                   sum(Rv([7 1 4]).*Rv([5 8 2]).*Rv([3 6 9]));
+            Q2 = detR.^(1/3);
+            % Unnormalized unsigned quaternion
+            q = sqrt(max(0,[(Q2+Rv(1)+Rv(5)+Rv(9))
+                            (Q2+Rv(1)-Rv(5)-Rv(9))
+                            (Q2-Rv(1)+Rv(5)-Rv(9))
+                            (Q2-Rv(1)-Rv(5)+Rv(9))]))/2;
+            % Now copy signs
+            g = find(Rv(6)<Rv(8)); q(2,g) = -q(2,g);
+            g = find(Rv(7)<Rv(3)); q(3,g) = -q(3,g);
+            g = find(Rv(2)<Rv(4)); q(4,g) = -q(4,g);
+            Q2 = sum(q.^2);
+            % Normalize
+            D = 0.5*(1-Q2);
+            q = q + q.*D([1 1 1 1],:);
+            % Make orientation correct
+            q = q';
+        end
         
         % Returns the parts of a transformation matrix
         function [R, t] = transformationMatrix2Parts(T)

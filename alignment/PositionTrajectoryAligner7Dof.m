@@ -1,4 +1,4 @@
-classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
+classdef PositionTrajectoryAligner7Dof < PositionTrajectoryAlignerBase
     %POSITIONTRAJECTORYALIGNERYAWONLY Contains functionality relating to a dense mapping system
    
     properties
@@ -7,7 +7,7 @@ classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
     methods
         
         % Constructor
-        function obj = PositionTrajectoryAligner6Dof()
+        function obj = PositionTrajectoryAligner7Dof()
             % Calling the superclass constructor
             obj = obj@PositionTrajectoryAlignerBase();
         end
@@ -24,13 +24,13 @@ classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
             assert(aligned_to_trajectory.length() == aligned_from_trajectory.length(), 'Vectors to be aligned must have the same size.')
             % The initial value of the optimization variable if not passed
             if nargin < 3
-                sigma_init = zeros(6,1);
+                sigma_init = [zeros(6,1) ; 0.25];
             end
             % Assigning the data matrices in the correct form
             X = aligned_from_trajectory.positions()';
             Y = aligned_to_trajectory.positions()';
             % Parameterizing the cost functions with dataset
-            f_residuals = @(sigma)PositionTrajectoryAligner6Dof.get_alignment_residuals( sigma, Y, X );
+            f_residuals = @(sigma)PositionTrajectoryAligner7Dof.get_alignment_residuals( sigma, Y, X );
             % Setting up the opimization options
             opt_TolFun = 1e-12;
             % opt_MaxFunEvals = 4*5000;
@@ -55,11 +55,12 @@ classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
             t_x = sigma_star(4);
             t_y = sigma_star(5);
             t_z = sigma_star(6);
+            scale = sigma_star(7)
             % Reconstructing the transformation matrix
-            R = PositionTrajectoryAligner6Dof.yprToRotationMatrix(w_z, w_y, w_x);
+            R = PositionTrajectoryAligner7Dof.yprToRotationMatrix(w_z, w_y, w_x);
             t = [ t_x; t_y; t_z ]; 
             T_alignment_matrix = [ R             t ;
-                                   zeros(1,3)    1 ; ];
+                                   zeros(1,3)    1/scale ; ];
             % Transformation object construction
             T_alignment = Transformation();
             T_alignment.initializeFromMatrix(T_alignment_matrix);
@@ -68,8 +69,10 @@ classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
         % Returns the alignment residuals for a given a value for the
         % parameter vector (sigma) and the data vectors (X, Y)
         function f_sigma = get_alignment_residuals( sigma, Y, X )
+
             % Data parameters
-            n_points = size(X,2);
+%             n_points = size(X,2);
+
             % Extracting the parameters
             w_x = sigma(1);
             w_y = sigma(2);
@@ -77,11 +80,27 @@ classdef PositionTrajectoryAligner6Dof < PositionTrajectoryAlignerBase
             t_x = sigma(4);
             t_y = sigma(5);
             t_z = sigma(6);
-            T = repmat([t_x;t_y;t_z],1,n_points);
+            scale = sigma(7);
+            
+            
+%             T = repmat([t_x;t_y;t_z],1,n_points);
             % Forming the rotation matrix
-            R = PositionTrajectoryAligner6Dof.yprToRotationMatrix(w_z, w_y, w_x);            
+            R = PositionTrajectoryAligner7Dof.yprToRotationMatrix(w_z, w_y, w_x);
+            
+            % Transforming the data with the homogeneous coordinates
+            X_hom = [ X ; ones(1, size(X,2)) ];
+            t = [t_x; t_y; t_z];
+            T = [ R t; 0 0 0 1/scale ]
+            X_trans_hom = T * X_hom;
+            X_trans = X_trans_hom(1:3,:) ./ X_trans_hom(4,:);
+                        
+%             X_trans_old = R*X + T;
+                        
+            %DEBUG            
+%             sum(sum((X_trans_old - X_trans).^2,1))
+            
             % Calculating the error
-            f_sigma = sum((Y - R*X - T).^2,1)';
+            f_sigma = sum((Y - X_trans).^2,1)';
         end
         
         % Converts euler angles to a rotation matrix
