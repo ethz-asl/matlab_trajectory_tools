@@ -72,7 +72,7 @@ T_alignment = position_trajectory_aligner.calculateAlignmentTransform(leica_posi
 %% Applying the alignment transform
 
 % Transforming the trajectory by the alignment transform
-gps_trajectory_aligned = gps_trajectory.applyStaticTransformLHS(T_alignment);
+gps_position_aligned = gps_trajectory.applyStaticTransformLHS(T_alignment);
 
 %% Plotting
 
