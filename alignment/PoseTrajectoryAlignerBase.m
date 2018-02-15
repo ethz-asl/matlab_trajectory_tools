@@ -92,44 +92,6 @@ classdef PoseTrajectoryAlignerBase
             quats_resampled = timeseries(quat_resampled_array, times);
         end
         
-%         % Apply an alignment transform to a trajectory
-%         function position_trajectory_aligned = alignTrajectory(position_trajectory, T_alignment)
-%             % Performing alignment
-%             trajectory_length = size(position_trajectory.Data,1);
-%             position_trajectory_aligned_data = T_alignment * [position_trajectory.Data'; ones(1, trajectory_length)];
-%             position_trajectory_aligned_data = position_trajectory_aligned_data(1:3,:)';
-%             % Writing to timeseries
-%             position_trajectory_aligned = timeseries(position_trajectory_aligned_data, position_trajectory.Time);
-%         end
-        
-%         % Calculate the RMS of the error vector between two trajectories.
-%         function rms_position_error = calculateRmsPositionError(...
-%                 to_trajectory, from_trajectory, T_alignment)
-%             % Checks
-%             if (size(to_trajectory.Data,1) ~= size(from_trajectory.Data,1))
-%                 error('Vectors to be aligned must have the same size.')
-%             end
-%             % Align from_trajectory.
-%             aligned_from_trajectory = ...
-%                 PositionTrajectoryAlignerBase.alignTrajectory(from_trajectory, T_alignment);
-%             % Calculate the errors in x y z.
-%             error_x_y_z = aligned_from_trajectory.Data - to_trajectory.Data;
-%             % Calculate the residuals.
-%             error_norm = sqrt(sum(abs(error_x_y_z).^2,2));
-%             rms_position_error = rms(error_norm);
-%         end
-        
-%         % Calculate the trajectory length.
-%         function trajectory_length = calculateTrajectoryLength(trajectory)
-%             N = length(trajectory.Time);
-%             trajectory_length = 0.0;
-%             % Sum of all data point connections.
-%             for i = 1:N-1
-%                 delta_s = norm(trajectory.Data(i+1,:) - trajectory.Data(i,:));
-%                 trajectory_length = trajectory_length + delta_s;
-%             end
-%         end
-        
     end
     
 end

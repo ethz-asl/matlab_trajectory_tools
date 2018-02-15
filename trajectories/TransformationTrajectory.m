@@ -50,6 +50,28 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             trajectory_inverse = TransformationTrajectory(q, t, obj.times);
         end
         
+        % Truncates the trajectory to indicies
+        function truncateToIndicies(obj, start_index, end_index)
+            % Rewriting the data
+            obj.setData(obj.orientations(start_index:end_index, :),...
+                        obj.positions(start_index:end_index, :),...
+                        obj.times(start_index:end_index));
+        end
+        
+        % Resamples the trajectory at the passed times
+        function resample(obj, times)
+            % Creating time series
+            orientation_timeseries = timeseries(obj.orientations, obj.times);
+            position_timeseries = timeseries(obj.positions, obj.times);
+            % Resampling
+            orientation_timeseries_resampled = obj.quaternionResample(orientation_timeseries, times);
+            position_timeseries_resampled = position_timeseries.resample(times);
+            % Updating the object
+            obj.setData(orientation_timeseries_resampled.Data(),...
+                        position_timeseries_resampled.Data(),...
+                        position_timeseries_resampled.Time());
+        end
+        
         % Applies a transformation to the trajectory
         function transformed_trajectory = applyStaticTransformLHS(obj, T_static)
             % Combined vector form
@@ -123,7 +145,7 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             % Creating the trajectory object
             windowed_trajectory = TransformationTrajectory(windowed_orientations, windowed_positions, windowed_times);
         end
-                
+           
         % Plots the trajectory
         function h = plot(obj, step, length, symbol)
             if nargin < 4
@@ -145,6 +167,39 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
             end
         end
         
+    end
+        
+    methods(Static)
+
+        % Resamples a quaternion time series using linear interpolation
+        function quats_resampled = quaternionResample(quats, times)
+            % Checks
+            assert(times(1) > quats.Time(1), 'Sampling times need to be in between data.')
+            assert(times(end) < quats.Time(end), 'Sampling times need to be in between data.')
+            % Getting the interpolation amounts
+            dummy_timeseries = timeseries((1:quats.Length)', quats.Time);
+            interpolation_factors = dummy_timeseries.resample(times).Data;
+            % Looping over the times and sampling
+            slerp_quats_low = zeros(length(times),4);
+            slerp_quats_high = zeros(length(times),4);
+            slerp_coeffs = zeros(length(times),1);
+            for index = 1:length(times)
+                % Getting the interpolation end points and coeff
+                interpolation_factor = interpolation_factors(index);
+                low_index = floor(interpolation_factor);
+                high_index = ceil(interpolation_factor);
+                interpolation_coeff = interpolation_factor - low_index;
+                % Slerping
+                slerp_quats_low(index,:) = quats.Data(low_index,:);
+                slerp_quats_high(index,:) = quats.Data(high_index,:);
+                slerp_coeffs(index) = interpolation_coeff;
+            end
+            % Slerping 2
+            quat_resampled_array = quatinterp(slerp_quats_low, slerp_quats_high, slerp_coeffs);
+            % Storing as timeseries for output
+            quats_resampled = timeseries(quat_resampled_array, times);
+        end
+                     
     end
     
 end

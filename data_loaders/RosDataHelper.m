@@ -195,6 +195,24 @@ classdef RosDataHelper < handle
             ranges_stamped.range = ranges;
         end
         
+        % Converts a set of position stamped messages to arrays
+        function vectors_stamped = convertVector3StampedMessages(vector3_stamped_messages)
+            % Initializing
+            message_num = size(vector3_stamped_messages,1);
+            times = zeros(message_num,1);
+            vectors = zeros(message_num,3);
+            % Looping over messages and extracting the data
+            for message_index = 1:message_num
+                message = vector3_stamped_messages{message_index};
+                times(message_index) = seconds(message.Header.Stamp);
+                vectors(message_index,:) = [message.Vector.X, message.Vector.Y, message.Vector.Z];
+            end
+            % Creating the time series for output
+            vectors_stamped.times = times;
+            vectors_stamped.vectors = vectors;
+        end
+
+        
     end
     
 end
