@@ -147,17 +147,20 @@ classdef TransformationTrajectory < handle & matlab.mixin.Copyable
         end
            
         % Plots the trajectory
-        function h = plot(obj, step, length, symbol)
-            if nargin < 4
+        function h = plot(obj, cs_axis_length, symbol)
+            if nargin < 3
                 symbol = '';
+            end
+            if nargin < 2
+                cs_axis_length=0.1;
             end
             holdstate = ishold;
             hold on
             % Plotting the position trajectory
             h_temp = obj.getPositionTrajectory().plot(symbol);
             % Plotting the transformation axis
-            for index = 1:step:obj.length()
-                obj.getTransformation(index).plot(length);
+            for index = 1:obj.length
+                obj.getTransformation(index).plot(cs_axis_length);
             end
             if nargout > 0 
                 h = h_temp;

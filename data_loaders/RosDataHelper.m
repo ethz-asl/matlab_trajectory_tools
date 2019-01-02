@@ -86,7 +86,7 @@ classdef RosDataHelper < handle
             % Creating the time series for output
             odometry.times = times;
             odometry.positions = positions;
-            odometry.orientation = orientations;
+            odometry.orientations = orientations;
             odometry.pose_covariances = pose_covariances;
             odometry.linear_velocities = linear_velocities;
             odometry.rotational_velocities = rotational_velocities;
