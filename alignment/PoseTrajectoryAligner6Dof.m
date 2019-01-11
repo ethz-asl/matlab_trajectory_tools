@@ -31,7 +31,7 @@ classdef PoseTrajectoryAligner6Dof < PoseTrajectoryAlignerBase
             X = [aligned_from_trajectory.positions aligned_from_trajectory.orientations]';
             Y = [aligned_to_trajectory.positions aligned_to_trajectory.orientations]';
             % Parameterizing the cost functions with dataset
-            f_residuals = @(sigma)PoseTrajectoryAligner6Dof.get_alignment_residuals( sigma, Y, X, orientation_scaling);
+            f_residuals = @(sigma) PoseTrajectoryAligner6Dof.get_alignment_residuals( sigma, Y, X, orientation_scaling );
             % Setting up the opimization options
             opt_TolFun = 1e-3;
             % opt_MaxFunEvals = 4*5000;
