@@ -20,10 +20,10 @@ clear ;
 %% Loading the data
 
 % Getting the datapath (relative load)
-bag_select = rosbag('/home/nico/2018-12-03/easy-2018-12-03-17-49-09_loam_imu_reordered.bag');
+bag_select = rosbag('/home/nico/2018-12-03/easy-2018-12-03-17-49-09_rovio_fused_reordered.bag');
 
 % Selecting the topics
-odom_poses_select = select(bag_select, 'Topic', '/aft_mapped_to_init');
+odom_poses_select = select(bag_select, 'Topic', '/rovio/odometry');
 vicon_poses_select = select(bag_select, 'Topic', '/lidar_stick/vrpn_client/estimated_odometry');
 
 % Reading the messages
@@ -66,13 +66,16 @@ position_trajectory_aligner = PoseTrajectoryAligner6Dof();
 orientation_scaling=1.0;
 T_alignment = position_trajectory_aligner.calculateAlignmentTransform(vicon_poses_resampled,...
                                                                       odom_poses_resampled, orientation_scaling);
+alignment_offset = regexprep(num2str(T_alignment.position),'\s+',',')
+alignment_orientation_q = regexprep(num2str(T_alignment.orientation_quat),'\s+',',')
+
 %% Applying the alignment transform
 
 % Transforming the trajectory by the alignment transform
 odom_poses_aligned = odom_poses_resampled.applyStaticTransformLHS(T_alignment);
 
 % calculate and display the rms in x, y, z direction
-position_rms=odom_poses_aligned.getPositionTrajectory().rmsErrorTo(vicon_poses_resampled.getPositionTrajectory())
+position_rms=mean(odom_poses_aligned.getPositionTrajectory().rmsErrorTo(vicon_poses_resampled.getPositionTrajectory()))
 %% Plotting
 
 % 3D Positions Pre-Alignment
@@ -108,7 +111,7 @@ pbaspect([1 1 1])
 view(3)
 
 %% Positions post-alignment on individual axes
-figure('Name', 'LOAM w/ IMU on the easy dataset');
+figure('Name', strcat('ROVIO on the easy dataset - RMS:', num2str(mean(position_rms),3)));
 opa=odom_poses_aligned.getPositionTrajectory();
 vpr=vicon_poses_resampled.getPositionTrajectory();
 
