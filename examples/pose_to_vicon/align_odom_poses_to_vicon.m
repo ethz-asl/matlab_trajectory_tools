@@ -20,7 +20,7 @@ clear ;
 %% Loading the data
 
 % Getting the datapath (relative load)
-bag_select = rosbag('/home/nico/2018-12-03/easy-2018-12-03-17-49-09_rovio_fused_reordered.bag');
+bag_select = rosbag('/home/nico/2018-12-03/easy_fused_reordered.bag');
 
 % Selecting the topics
 odom_poses_select = select(bag_select, 'Topic', '/rovio/odometry');
@@ -57,25 +57,21 @@ vicon_trajectory = TransformationTrajectory(vicon_poses.orientations, vicon_pose
 %       Odometry   - slow
 
 % Creating an aligner
-position_trajectory_aligner = PoseTrajectoryAligner6Dof();
+position_trajectory_aligner = PositionTrajectoryAligner6Dof();
 % Resampling the data
 [vicon_poses_resampled, odom_poses_resampled] =...
     position_trajectory_aligner.truncateAndResampleDatastreams(vicon_poses,...
                                                                odom_poses);
 % Calculating the alignment transform
-orientation_scaling=1.0;
 T_alignment = position_trajectory_aligner.calculateAlignmentTransform(vicon_poses_resampled,...
-                                                                      odom_poses_resampled, orientation_scaling);
-alignment_offset = regexprep(num2str(T_alignment.position),'\s+',',')
-alignment_orientation_q = regexprep(num2str(T_alignment.orientation_quat),'\s+',',')
-
+                                                                      odom_poses_resampled);
 %% Applying the alignment transform
 
 % Transforming the trajectory by the alignment transform
 odom_poses_aligned = odom_poses_resampled.applyStaticTransformLHS(T_alignment);
 
 % calculate and display the rms in x, y, z direction
-position_rms=mean(odom_poses_aligned.getPositionTrajectory().rmsErrorTo(vicon_poses_resampled.getPositionTrajectory()))
+position_rms=odom_poses_aligned.rmsErrorTo(vicon_poses_resampled)
 %% Plotting
 
 % 3D Positions Pre-Alignment
@@ -97,7 +93,7 @@ view(3)
 % 3D Positions Post-Alignment
 ax2=subplot(1,2,2);
 ax2.ColorOrderIndex=3;
-odom_poses_aligned.getPositionTrajectory().plot()
+odom_poses_aligned.plot()
 hold on
 ax2.ColorOrderIndex=5;
 vicon_trajectory.getPositionTrajectory().plot()
@@ -109,41 +105,3 @@ title('Trajectories Post-Alignment')
 legend('Odom Position', 'Start Points', 'End Points', 'Vicon Positions')
 pbaspect([1 1 1])
 view(3)
-
-%% Positions post-alignment on individual axes
-figure('Name', strcat('ROVIO on the easy dataset - RMS:', num2str(mean(position_rms),3)));
-opa=odom_poses_aligned.getPositionTrajectory();
-vpr=vicon_poses_resampled.getPositionTrajectory();
-
-ax11=subplot(3,1,1);
-ax11.ColorOrderIndex=3;
-plot(opa.times,opa.positions(:,1));
-hold on
-ax11.ColorOrderIndex=5;
-plot(vpr.times,vpr.positions(:,1));
-hold off
-xlabel('ROS Time'); ylabel('x');
-title('X')
-legend('Odom Positions', 'Vicon Positions')
-
-ax12=subplot(3,1,2);
-ax12.ColorOrderIndex=4;
-plot(opa.times,opa.positions(:,2));
-hold on
-ax12.ColorOrderIndex=5;
-plot(vpr.times,vpr.positions(:,2));
-hold off
-xlabel('ROS Time'); ylabel('y');
-title('Y');
-legend('Odom Positions', 'Vicon Positions');
-
-ax13=subplot(3,1,3);
-ax13.ColorOrderIndex=4;
-plot(opa.times,opa.positions(:,3));
-hold on
-ax13.ColorOrderIndex=5;
-plot(vpr.times,vpr.positions(:,3));
-hold off
-xlabel('ROS Time'); ylabel('z');
-title('Z')
-legend('Odom Positions', 'Vicon Positions')
