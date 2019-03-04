@@ -1,4 +1,4 @@
-function [T_align, r_align, q_align, rms_average, odom_poses_aligned, vicon_poses_resampled, q_errs] = align_trajectories_3d(bagfile, odom_topic, gt_topic)
+function [T_align, r_align, q_align, rms_average, odom_poses_aligned, vicon_poses_resampled, q_errs] = align_trajectory_positions3d(bagfile, odom_topic, gt_topic)
 %% align_trajectories
 %
 % Aligns rtk and lieca trajectories for MBZIRC.
@@ -52,15 +52,14 @@ fprintf('Calculating the alignment transform...\n')
 %       Odometry   - slow
 
 % Creating an aligner
-position_trajectory_aligner = PoseTrajectoryAligner6Dof();
-% Resampling the data
+position_trajectory_aligner = PositionTrajectoryAligner6Dof();
+% Resampling the data and maintaining the orientation information
+pose_trajectory_for_resampling = PoseTrajectoryAligner6Dof();
 [vicon_poses_resampled, odom_poses_resampled] =...
-    position_trajectory_aligner.truncateAndResampleDatastreams(vicon_poses,...
+    pose_trajectory_for_resampling.truncateAndResampleDatastreams(vicon_poses,...
                                                                odom_poses);
 % Calculating the alignment transform
-orientation_scaling=1.0;
-T_alignment = position_trajectory_aligner.calculateAlignmentTransform(vicon_poses_resampled,...
-                                                                      odom_poses_resampled, orientation_scaling);
+T_alignment = position_trajectory_aligner.calculateAlignmentTransform(vicon_poses_resampled, odom_poses_resampled);
 %r_align = regexprep(num2str(T_alignment.position),'\s+',',');
 %q_align = regexprep(num2str(T_alignment.orientation_quat),'\s+',',');
 r_align = T_alignment.position;
@@ -86,3 +85,4 @@ for i=1:length(odom_poses_aligned.orientations)
     end
     q_errs(i,3) = rad2deg(angle);
 end
+

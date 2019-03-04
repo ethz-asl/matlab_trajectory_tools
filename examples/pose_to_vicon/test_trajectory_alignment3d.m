@@ -1,0 +1,1 @@
+[T,r,q,rms,odom,vicon,q_errs]=align_trajectory_positions3d('/home/nico/datasets/2019-02-26-voliroT/easy-loam.bag','/imu_to_world','/dragonfly/vrpn_client/estimated_odometry');
