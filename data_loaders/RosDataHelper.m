@@ -17,21 +17,47 @@ classdef RosDataHelper < handle
     
     methods(Static)
        
-        % Converts a set of position stamped messages to arrays
+        % Converts a set of position stamped messages to arrays. sets
+        % rotations to unit quaternion
         function positions_stamped = convertPositionStampedMessages(position_stamped_messages)
             % Initializing
             message_num = size(position_stamped_messages,1);
             times = zeros(message_num,1);
             positions = zeros(message_num,3);
+            orientations = zeros(message_num,4);
             % Looping over messages and extracting the data
             for message_index = 1:message_num
                 message = position_stamped_messages{message_index};
                 times(message_index) = seconds(message.Header.Stamp);
                 positions(message_index,:) = [message.Point.X, message.Point.Y, message.Point.Z];
+                orientations(message_index,:) = [1,0,0,0];
             end
             % Creating the time series for output
             positions_stamped.times = times;
             positions_stamped.positions = positions;
+            positions_stamped.orientations = orientations;
+        end
+        
+        function pose_stamped = convertPoseStampedMessages(pose_stamped_messages)
+            % Initializing
+            message_num = size(pose_stamped_messages,1);
+            times = zeros(message_num,1);
+            positions = zeros(message_num,3);
+            orientations = zeros(message_num,4);
+            % Looping over messages and extracting the data
+            for message_index = 1:message_num
+                message = pose_stamped_messages{message_index};
+                times(message_index) = seconds(message.Header.Stamp);
+                positions(message_index,:) = [message.Pose.Position.X, message.Pose.Position.Y, message.Pose.Position.Z];
+                orientations(message_index,:) = [message.Pose.Orientation.W,...
+                                                message.Pose.Orientation.X,...
+                                                message.Pose.Orientation.Y,...
+                                                message.Pose.Orientation.Z];
+            end
+            % Creating the time series for output
+            pose_stamped.times = times;
+            pose_stamped.positions = positions;
+            pose_stamped.orientations = orientations;
         end
         
         % TODO(millane) Convert the whole message not just part of it.

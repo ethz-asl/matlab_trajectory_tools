@@ -13,37 +13,79 @@ function [T_align, r_align, q_align, rms_average, odom_poses_aligned, vicon_pose
 % Revision History:
 % [17.11.16, AM] file created
 %
-%% Loading the data
-fprintf('Loading the bagfile...\n')
+%% handle bag topic selection
+baginfo = rosbag('info', bagfile);
 bag_select = rosbag(bagfile);
-
-% Selecting the topics
+topiclist = {baginfo.Topics(:).Topic};
+%check for topic existence
+if ~any(strcmp(topiclist,gt_topic))
+    for i=1:length(topiclist)
+        topic=topiclist{i};
+        if contains(topic, 'leica')
+            fprintf('Could not find ground_truth topic. Setting it to:\n');            
+            gt_topic=topic           
+            break;
+        else
+            if contains(topic, 'vrpn_client')
+                fprintf('Could not find ground_truth topic. Setting it to:\n');            
+                gt_topic=topic
+                break;
+            end
+        end
+    end
+end
+if ~any(strcmp(topiclist,odom_topic))
+    for i=1:length(topiclist)
+        topic=topiclist{i};
+        if contains(topic, 'odom')
+            if ~strcmp(topic,gt_topic)
+                fprintf('Could not find odometry topic. Setting it to:\n');                        
+                odom_topic = topic
+                break;
+            end
+        end
+    end
+end
 odom_poses_select = select(bag_select, 'Topic', odom_topic);
 vicon_poses_select = select(bag_select, 'Topic', gt_topic);
-
-% Reading the messages
-odom_pose_messages = odom_poses_select.readMessages;
-vicon_pose_messages = vicon_poses_select.readMessages;
 
 %% Extracting the data
 fprintf('Extracting messages...\n')
 % Creating a helper to help with data extraction
 ros_data_helper = RosDataHelper();
 
-% Extracting the data to arrays
-odom_poses = ros_data_helper.convertOdometryMessages(odom_pose_messages);
-vicon_poses = ros_data_helper.convertOdometryMessages(vicon_pose_messages);
+% Reading the messages
+odom_pose_messages = odom_poses_select.readMessages;
+vicon_pose_messages = vicon_poses_select.readMessages;
 
-%% Converting to trajectory objects
+% determine topic type
+gt_type = char(vicon_poses_select.AvailableTopics{1,2});
+odom_type = char(odom_poses_select.AvailableTopics{1,2});
 
-% Shifting the times such that they start at zero
-start_time = vicon_poses.times(1);
+%currently only Odometry, PoseStamped and PointStamped are supported
+if strcmp(odom_type,'nav_msgs/Odometry')
+    odom_poses = ros_data_helper.convertOdometryMessages(odom_pose_messages);
+else
+    if strcmp(odom_type,'geometry_msgs/PointStamped')
+        odom_poses = ros_data_helper.convertPositionStampedMessages(odom_pose_messages);
+    else
+        if strcmp(odom_type,'geometry_msgs/PoseStamped')
+            odom_poses = ros_data_helper.convertPoseStampedMessages(odom_pose_messages);
+        end
+    end
+end
 
-% Constructing the transformation trajectory objects
-odom_trajectory = TransformationTrajectory(odom_poses.orientations, odom_poses.positions,...
-                                    odom_poses.times - start_time);
-vicon_trajectory = TransformationTrajectory(vicon_poses.orientations, vicon_poses.positions,...
-                                      vicon_poses.times - start_time);
+if strcmp(gt_type,'nav_msgs/Odometry')
+    vicon_poses = ros_data_helper.convertOdometryMessages(vicon_pose_messages);
+else
+    if strcmp(gt_type,'geometry_msgs/PointStamped')
+        vicon_poses = ros_data_helper.convertPositionStampedMessages(vicon_pose_messages);
+    else
+        if strcmp(odom_type,'geometry_msgs/PoseStamped')
+            vicon_poses = ros_data_helper.convertPoseStampedMessages(vicon_pose_messages);
+        end
+    end
+end
 
 %% Calculating the alignment transform
 fprintf('Calculating the alignment transform...\n')
