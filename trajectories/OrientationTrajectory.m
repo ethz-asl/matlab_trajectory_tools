@@ -67,6 +67,11 @@ classdef OrientationTrajectory < handle & matlab.mixin.Copyable
             R = quat2rot(obj.orientations);
         end
         
+        function magnitudes = getMagnitudes(obj)
+            orientations_norm = k_quat_norm(obj.orientations);
+            magnitudes = 2*acos(orientations_norm(:,1));
+        end
+        
     end
     
 end
