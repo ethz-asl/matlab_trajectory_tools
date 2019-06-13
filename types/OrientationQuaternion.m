@@ -36,7 +36,7 @@ classdef OrientationQuaternion < handle & matlab.mixin.Copyable
         end
         
         % Rotates a vector
-        function rv = rotateVector(obj, v)
+        function rv = rotateVectors(obj, v)
             rv = k_quat_rotate(obj.quat, v);
         end
         
