@@ -73,7 +73,7 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             % Checks
             assert(size(vecs,2) == 3, 'Needs to be nx3 matrix');
             % Getting the transformed vectors
-            vecs_hom = [vecs'; zeros(1, size(vecs,1))];
+            vecs_hom = [vecs'; ones(1, size(vecs,1))];
             vecs_transformed_hom = obj.transformation_matrix * vecs_hom;
             vecs_transformed = vecs_transformed_hom(1:3,:)';
         end
