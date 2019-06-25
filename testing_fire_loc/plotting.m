@@ -7,17 +7,17 @@ clear ;
 
 % Getting the datapath (UAV paths)
 [script_path, ~, ~] = fileparts(mfilename('fullpath'));
-rosbag_path = strcat(script_path, '/fireTestResult1Color.bag');
+rosbag_path = strcat(script_path, '/fireTestResult1.bag');
 bag_trajectories = rosbag(rosbag_path);
 
 % Getting the datapath (fire estimates)
 [script_path, ~, ~] = fileparts(mfilename('fullpath'));
-rosbag_path = strcat(script_path, '/fireTestResult1Color.bag');
+rosbag_path = strcat(script_path, '/fireTestResult1.bag');
 bag_estimates = rosbag(rosbag_path);
 
 % Getting the datapath (fire leica)
 [script_path, ~, ~] = fileparts(mfilename('fullpath'));
-rosbag_path = strcat(script_path, '/fireTesting/leicaFireData2.bag');
+rosbag_path = strcat(script_path, '/leicaFireData2.bag');
 bag_leica = rosbag(rosbag_path);
 
 % Selecting the topics
@@ -163,6 +163,6 @@ grid on
 xlabel('x [m]', 'FontSize',15); ylabel('y [m]', 'FontSize',15); zlabel('z [m]', 'FontSize',15);
 title('Fire Estimation', 'FontSize',22)
 legend('Fire Estimates', 'Fire Estimates Mean', 'Fire Groundtruth',...
-    'Variance Ellipse Estimates', 'Rovio Trajectory', 'Start Position', 'End Position', 'Leica Trajectory', ...
+     'Rovio Trajectory', 'Start Position', 'End Position', 'Leica Trajectory', ...
     'FontSize',17);
 
