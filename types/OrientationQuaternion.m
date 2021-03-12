@@ -26,12 +26,6 @@ classdef OrientationQuaternion < handle & matlab.mixin.Copyable
             obj.quat = quat;
         end
         
-        % Initialize from euler angles
-        function initializeFromYPR(obj, y, p, r)
-            q = ypr2quat(y,p,r)';
-            obj.setData(q);
-        end
-        
         % Get rotation matrix
         function R = getRotationMatrix(obj)
             R = squeeze(quat2rot(obj.quat));
@@ -45,6 +39,25 @@ classdef OrientationQuaternion < handle & matlab.mixin.Copyable
         % Returns an object representing the inverse quaternion
         function q_inv = inverse(obj)
             q_inv = OrientationQuaternion([obj.quat(1) -obj.quat(2:4)]);
+        end
+        
+        function q = compose(obj, other)
+            q = OrientationQuaternion(k_quat_mult(obj.quat, other.quat));
+        end
+        
+        function q = diff(obj, other)
+             q = obj.compose(other.inverse);
+        end
+        
+        function [axis, angle] = axisAngle(obj)
+            vec_mag = norm(obj.quat(2:4));
+            if vec_mag > 0
+                angle = 2 * acos(obj.quat(1));
+                axis = obj.quat(2:4) / norm(obj.quat(2:4));
+            else
+                angle = 0;
+                axis = [1 0 0];
+            end
         end
         
         % Plots this transform as a set of axis
@@ -70,6 +83,18 @@ classdef OrientationQuaternion < handle & matlab.mixin.Copyable
             if ~holdstate
               hold off
             end
+        end
+        
+    end
+    
+    methods(Static)
+        
+        function q = fromYPR(y, p, r)
+            q = OrientationQuaternion(ypr2quat(y,p,r)');
+        end
+        
+        function q = fromRotationMatrix(R)
+            q = OrientationQuaternion(rot2quat(R)');
         end
         
     end
