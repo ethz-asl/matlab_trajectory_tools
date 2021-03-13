@@ -35,23 +35,43 @@ classdef RosDataHelper < handle
         end
         
         % TODO(millane) Convert the whole message not just part of it.
-%         % Converts a set of position stamped messages to arrays
-%         function [position_data] = convertPoseStampedWithCovarianceToPostionTimeseries(pose_messages)
-%             % Initializing
-%             message_num = size(pose_messages,1);
-%             position_data_time = zeros(message_num,1);
-%             position_data_data = zeros(message_num,3);
-%             % Looping over messages and extracting the data
-%             for message_index = 1:message_num
-%                 message = pose_messages{message_index};
-%                 position_data_time(message_index) = seconds(message.Header.Stamp);
-%                 position_data_data(message_index,:) = [message.Pose.Pose.Position.X,...
-%                                                        message.Pose.Pose.Position.Y,...
-%                                                        message.Pose.Pose.Position.Z];
-%             end
-%             % Creating the time series for output
-%             position_data = timeseries(position_data_data, position_data_time);
-%         end
+        % Converts a set of pose stamped messages to arrays
+        function [positions_stamped] = convertPoseStampedWithCovariance(pose_messages)
+            % Initializing
+            message_num = size(pose_messages,1);
+            times = zeros(message_num,1);
+            positions = zeros(message_num,3);
+            % Looping over messages and extracting the data
+            for message_index = 1:message_num
+                message = pose_messages{message_index};
+                times(message_index) = seconds(message.Header.Stamp);
+                positions(message_index,:) = [message.Pose.Pose.Position.X,...
+                                              message.Pose.Pose.Position.Y,...
+                                              message.Pose.Pose.Position.Z];
+            end
+            % Creating the time series for output
+            positions_stamped.times = times;
+            positions_stamped.positions = positions;
+        end
+        
+        function [positions_stamped] = convertPoseStampedToPositions(pose_messages)
+            % Initializing
+            message_num = size(pose_messages,1);
+            times = zeros(message_num,1);
+            positions = zeros(message_num,3);
+            % Looping over messages and extracting the data
+            for message_index = 1:message_num
+                message = pose_messages{message_index};
+                times(message_index) = seconds(message.Header.Stamp);
+                positions(message_index,:) = [message.Pose.Position.X,...
+                                              message.Pose.Position.Y,...
+                                              message.Pose.Position.Z];
+            end
+            % Creating the time series for output
+            positions_stamped.times = times;
+            positions_stamped.positions = positions;
+        end
+
                 
         function odometry = convertOdometryMessages(odometry_messages)
             % Initializing
@@ -210,6 +230,23 @@ classdef RosDataHelper < handle
             % Creating the time series for output
             vectors_stamped.times = times;
             vectors_stamped.vectors = vectors;
+        end
+        
+        % Converts a set of position stamped messages to arrays
+        function points_stamped = convertPointStampedMessages(point_stamped_messages)
+            % Initializing
+            message_num = size(point_stamped_messages,1);
+            times = zeros(message_num,1);
+            points = zeros(message_num,3);
+            % Looping over messages and extracting the data
+            for message_index = 1:message_num
+                message = point_stamped_messages{message_index};
+                times(message_index) = seconds(message.Header.Stamp);
+                points(message_index,:) = [message.Point.X, message.Point.Y, message.Point.Z];
+            end
+            % Creating the time series for output
+            points_stamped.times = times;
+            points_stamped.points = points;
         end
 
         

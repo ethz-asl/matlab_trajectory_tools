@@ -116,16 +116,16 @@ classdef PositionTrajectory < handle & matlab.mixin.Copyable
         end
         
         % Plots the trajectory
-        function h = plot(obj, symbol)
-            if nargin < 2
-                symbol = '';
-            end
+        function h = plot(obj, varargin)
+%             if nargin < 2
+%                 symbol = '';
+%             end
             holdstate = ishold;
             hold on
             h_temp = plot3( obj.positions(:,1),...
                             obj.positions(:,2),...
                             obj.positions(:,3),...
-                            symbol);
+                            varargin{:});
             plot3( obj.positions(1,1),...
                    obj.positions(1,2),...
                    obj.positions(1,3), 'go');
@@ -167,7 +167,7 @@ classdef PositionTrajectory < handle & matlab.mixin.Copyable
             holdstate = ishold;
             hold on
             subplot(3,1,1)
-            plot(obj.times, obj.positions(:,1), symbol)
+            h_temp = plot(obj.times, obj.positions(:,1), symbol);
             xlabel('Time (s)'); ylabel('X (m)');
             hold on
             subplot(3,1,2)

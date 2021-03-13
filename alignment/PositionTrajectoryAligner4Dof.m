@@ -35,7 +35,7 @@ classdef PositionTrajectoryAligner4Dof < PositionTrajectoryAlignerBase
             opt_TolFun = 1e-3;
             % opt_MaxFunEvals = 4*5000;
             % opt_MaxIter = 1000;
-            opt_Display = 'final'; %'off' %'final'
+            opt_Display = 'iter'; %'off' %'final'
             % options = optimoptions('lsqnonlin', 'TolFun', opt_TolFun, 'Display',...
             %                        opt_Display, 'MaxFunEvals', opt_MaxFunEvals,...
             %                        'MaxIter', opt_MaxIter);
@@ -59,8 +59,7 @@ classdef PositionTrajectoryAligner4Dof < PositionTrajectoryAlignerBase
             T_alignment_matrix = [ R             t ;
                                    zeros(1,3)    1 ; ];
             % Transformation object construction
-            T_alignment = Transformation();
-            T_alignment.initializeFromMatrix(T_alignment_matrix);
+            T_alignment = Transformation.initializeFromMatrix(T_alignment_matrix);
         end
         
         % Returns the alignment residuals for a given a value for the

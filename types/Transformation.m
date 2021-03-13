@@ -46,12 +46,12 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
             obj.transformation_matrix = [R p ; 0 0 0 1];
         end
         
-        % Initialize from a transformation matrix
-        function initializeFromMatrix(obj, T)
-            [R, t] = obj.transformationMatrix2Parts(T);
-            q = obj.rot2quat(R);
-            obj.setData(q, t);
-        end
+%         % Initialize from a transformation matrix
+%         function initializeFromMatrix(obj, T)
+%             [R, t] = obj.transformationMatrix2Parts(T);
+%             q = obj.rot2quat(R);
+%             obj.setData(q, t);
+%         end
         
         % Operator times
         function r = mtimes(obj_1, obj_2)
@@ -68,14 +68,10 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
 %             r_q = obj_1.quatmult(obj_1.orientation_quat(), obj_2.orientation_quat())
         end
         
-        % Transforms a set of vectors
+        % Transforms a set of vectors       
         function vecs_transformed = transformVectorsLHS(obj, vecs)
-            % Checks
             assert(size(vecs,2) == 3, 'Needs to be nx3 matrix');
-            % Getting the transformed vectors
-            vecs_hom = [vecs'; ones(1, size(vecs,1))];
-            vecs_transformed_hom = obj.transformation_matrix * vecs_hom;
-            vecs_transformed = vecs_transformed_hom(1:3,:)';
+            vecs_transformed = vecs * obj.transformation_matrix(1:3,1:3)' + obj.transformation_matrix(1:3,4)';
         end
         
         % Returns the inverse transformation
@@ -98,6 +94,14 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
         % Gets the translation vector
         function t = getTranslationVector(obj)
             t = obj.transformation_matrix(1:3,4);
+        end
+        
+        function q = getRotation(obj)
+            q = OrientationQuaternion(obj.orientation_quat);
+        end
+        
+        function vec = getVector(obj)
+            vec = [obj.orientation_quat obj.position];
         end
         
         % Plots this transform as a set of axis
@@ -130,7 +134,12 @@ classdef Transformation < handle & matlab.mixin.Copyable & LinearTransformationB
     
     methods(Static)
         
-        % Returns the parts of a transformation matrix
+        function T = initializeFromMatrix(T)
+            [R, t] = Transformation.transformationMatrix2Parts(T);
+            q = rot2quat(R)';
+            T = Transformation(q, t);
+        end
+        
         function [R, t] = transformationMatrix2Parts(T)
             R = T(1:3,1:3);
             t = T(1:3,4)';
